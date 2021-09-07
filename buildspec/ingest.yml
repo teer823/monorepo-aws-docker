@@ -1,7 +1,6 @@
 # for CodeBuild Source : Set Webhook 
-# HEAD_REF: ^refs/tags/service-name/([\w\.-]+)$ | previously =>  ^refs/tags/service-name/([\d\.]+)$ | previously =>  ^refs/heads/master$ 
-# FILE_PATH: EMPTY!!  | previously => (.*service-name.+$)|(.*buildspec/service.yml$)|(.*lib.+$)
-# add environ variable according to https://docs.aws.amazon.com/codebuild/latest/userguide/sample-docker.html
+# HEAD_REF: ^refs/tags/service-name/([\w\.-]+)$
+# add environment variable according to https://docs.aws.amazon.com/codebuild/latest/userguide/sample-docker.html
 # AWS_DEFAULT_REGION = ap-southeast-1
 # AWS_ACCOUNT_ID = <ECR_ACCOUNT_ID>
 # IMAGE_REPO_NAME =  project/service-name | from ECR
