@@ -1,0 +1,40 @@
+# for CodeBuild Source : Set Webhook 
+# HEAD_REF: ^refs/tags/service-name/([\w\.-]+)$ | previously =>  ^refs/tags/service-name/([\d\.]+)$ | previously =>  ^refs/heads/master$ 
+# FILE_PATH: EMPTY!!  | previously => (.*service-name.+$)|(.*buildspec/service.yml$)|(.*lib.+$)
+# add environ variable according to https://docs.aws.amazon.com/codebuild/latest/userguide/sample-docker.html
+# AWS_DEFAULT_REGION = ap-southeast-1
+# AWS_ACCOUNT_ID = <ECR_ACCOUNT_ID>
+# IMAGE_REPO_NAME =  project/service-name | from ECR
+# REPO_FOLDER = <folder_name>
+
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo Pre Build Phase...
+      - export TAG_VERSION_NUMBER=$(echo $CODEBUILD_WEBHOOK_TRIGGER | sed 's/.*\///')
+      - echo $TAG_VERSION_NUMBER
+      - >
+        PACKAGE_VERSION=$(cat $REPO_FOLDER/package.json | grep version | head -1 | awk -F: '{print $2}' | sed 's/[",[:space:]]//g')
+      - echo $PACKAGE_VERSION > version.txt
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+  build:
+    commands:
+      - echo Build Phase...
+      - cd $REPO_FOLDER
+      - docker build -t $IMAGE_REPO_NAME:$TAG_VERSION_NUMBER -t $IMAGE_REPO_NAME:latest .
+      - docker tag $IMAGE_REPO_NAME:$TAG_VERSION_NUMBER $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$TAG_VERSION_NUMBER
+      - docker tag $IMAGE_REPO_NAME:latest $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:latest 
+  post_build:
+    commands:
+      - echo Post Build Phase...
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$TAG_VERSION_NUMBER
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:latest
+artifacts:
+  files:
+    - '$REPO_FOLDER/**/*'
+    - 'lib/**/*'
+    - 'version.txt'
+  name: '$IMAGE_REPO_NAME-$TAG_VERSION_NUMBER'
+  discard-paths: no
