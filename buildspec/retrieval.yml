@@ -33,7 +33,6 @@ phases:
 artifacts:
   files:
     - '$REPO_FOLDER/**/*'
-    - 'lib/**/*'
     - 'version.txt'
   name: '$IMAGE_REPO_NAME-$TAG_VERSION_NUMBER'
   discard-paths: no
